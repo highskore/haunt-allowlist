@@ -64,6 +64,8 @@ impl Guest for Plugin {
     }
 
     fn on_row_moved(_surface: String, _group: String, _before: Option<String>) {}
+
+    fn on_theme_changed() {}
 }
 
 export!(Plugin);
