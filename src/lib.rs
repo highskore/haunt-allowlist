@@ -58,6 +58,12 @@ impl Guest for Plugin {
     }
 
     fn on_action(_action_id: String, _payload: String) {}
+
+    fn row_menu(_surface: String) -> Vec<MenuItem> {
+        Vec::new()
+    }
+
+    fn on_row_moved(_surface: String, _group: String, _before: Option<String>) {}
 }
 
 export!(Plugin);
