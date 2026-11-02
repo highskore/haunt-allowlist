@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wit-bindgen = { version = "0.63", default-features = false, features = ["macros", "realloc"] }
+serde_json = "1"
 
 [profile.release]
 opt-level = "s"

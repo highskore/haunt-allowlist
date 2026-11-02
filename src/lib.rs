@@ -6,16 +6,14 @@
 wit_bindgen::generate!({ path: "wit/haunt-plugin.wit", world: "plugin" });
 
 use std::collections::BTreeSet;
-use std::sync::Mutex;
 
 use haunt::plugin::allowlist::{self, Approval};
+use haunt::plugin::kv;
 use haunt::plugin::log::log;
 use haunt::plugin::types::LogLevel;
 
 pub const SUGGEST_AFTER: u32 = 3;
-
-/// (project, command) pairs already proposed in this run; the host forgets proposals on restart too.
-static PROPOSED: Mutex<BTreeSet<(String, String)>> = Mutex::new(BTreeSet::new());
+const KEY: &str = "proposed";
 
 struct Plugin;
 
@@ -29,15 +27,37 @@ pub fn due(approvals: Vec<Approval>, proposed: &BTreeSet<(String, String)>) -> V
         .collect()
 }
 
+/// The core's `allow_done` is in-memory, so a dismissed suggestion would come back after every
+/// restart; the proposed set therefore lives in kv.
+fn proposed() -> BTreeSet<(String, String)> {
+    kv::get(KEY).and_then(|j| serde_json::from_str(&j).ok()).unwrap_or_default()
+}
+
+fn save(proposed: &BTreeSet<(String, String)>) {
+    match serde_json::to_string(proposed) {
+        Ok(j) => {
+            if let Err(e) = kv::set(KEY, &j) {
+                log(LogLevel::Warn, &format!("allowlist: proposed set not saved: {e}"));
+            }
+        }
+        Err(_) => log(LogLevel::Warn, "allowlist: proposed set not serializable"),
+    }
+}
+
 fn check() {
-    let mut proposed = PROPOSED.lock().unwrap_or_else(|e| e.into_inner());
-    for (project, command) in due(allowlist::approvals(SUGGEST_AFTER), &proposed) {
+    let mut proposed = proposed();
+    let fresh = due(allowlist::approvals(SUGGEST_AFTER), &proposed);
+    if fresh.is_empty() {
+        return;
+    }
+    for (project, command) in fresh {
         // A refusal (say, a project that is a symlink) won't change by asking again.
         if let Err(e) = allowlist::propose(&project, &command) {
             log(LogLevel::Info, &format!("not proposing {command:?} in {project}: {e}"));
         }
         proposed.insert((project, command));
     }
+    save(&proposed);
 }
 
 impl Guest for Plugin {
@@ -92,6 +112,24 @@ mod tests {
         seen.insert(("/p".to_owned(), "cargo test".to_owned()));
         assert!(due(vec![approval("/p", "cargo test", 4)], &seen).is_empty());
         assert_eq!(due(vec![approval("/q", "cargo test", 3)], &seen).len(), 1, "another project is another rule");
+    }
+
+    #[test]
+    fn saved_set_still_skips_after_a_restart() {
+        let mut seen = BTreeSet::new();
+        seen.insert(("/p".to_owned(), "cargo test".to_owned()));
+        seen.insert(("/q".to_owned(), "echo \"hi there\"".to_owned()));
+        let restored: BTreeSet<(String, String)> = serde_json::from_str(&serde_json::to_string(&seen).unwrap()).unwrap();
+        assert_eq!(restored, seen);
+        assert!(due(vec![approval("/p", "cargo test", 5), approval("/q", "echo \"hi there\"", 9)], &restored).is_empty());
+        assert_eq!(due(vec![approval("/r", "ls", 3)], &restored).len(), 1, "an unrecorded rule is still proposed");
+    }
+
+    #[test]
+    fn unreadable_saved_set_starts_empty() {
+        let none: BTreeSet<(String, String)> = serde_json::from_str("not json").unwrap_or_default();
+        assert!(none.is_empty());
+        assert_eq!(due(vec![approval("/p", "cargo test", 3)], &none).len(), 1);
     }
 
     #[test]
