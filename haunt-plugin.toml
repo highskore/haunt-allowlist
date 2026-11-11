@@ -1,0 +1,12 @@
+[plugin]
+id = "dev.haunt.allowlist"
+name = "Allowlist suggestions"
+description = "Suggests a Claude Code allow rule after you approve the same command 3 times"
+version = "0.1.0"
+api = "0.4"
+entry = "target/wasm32-wasip2/release/haunt_plugin.wasm"
+license = "MIT"
+
+[capabilities]
+events = ["agent.tool"]
+allowlist_suggest = true
