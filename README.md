@@ -10,7 +10,7 @@ The plugin only proposes. Haunt shows the proposal as a suggestion, and writes t
 - the project is a canonical, non-symlinked folder you own
 - the file goes through Haunt's symlink-safe write
 
-Haunt's core counts the approvals. This plugin decides when to offer a rule: after 3, once per rule per run.
+Haunt's core counts the approvals. This plugin decides when to offer a rule: after 3, once per rule, remembered across restarts (the proposed set lives in the plugin's kv, so a suggestion you dismissed stays gone).
 
 ## Capabilities
 
