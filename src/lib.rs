@@ -68,9 +68,8 @@ impl Guest for Plugin {
     fn on_settings_changed(_settings: String) {}
 
     /// An approval is followed by the tool running, so each tool event is a moment to look.
-    fn on_event(_event: AgentEvent) -> Option<Decoration> {
+    fn on_event(_event: AgentEvent) {
         check();
-        None
     }
 
     fn palette_items(_mode: String, _query: String) -> Vec<PaletteItem> {
@@ -86,6 +85,16 @@ impl Guest for Plugin {
     fn on_row_moved(_surface: String, _group: String, _before: Option<String>) {}
 
     fn on_theme_changed() {}
+
+    fn on_tick(_now_ms: u64) {}
+
+    fn on_exec(_job: u64, _outcome: Result<haunt::plugin::exec::Output, String>) {}
+
+    fn on_away_changed(_away: bool, _away_ms: u64) {}
+
+    fn on_hover_hold(_held: bool, _surface: String) {}
+
+    fn on_fs_tree(_job: u64, _outcome: Result<haunt::plugin::fs_list::TreeResult, String>) {}
 }
 
 export!(Plugin);
