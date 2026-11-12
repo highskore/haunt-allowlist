@@ -1,4 +1,17 @@
-# haunt-allowlist
+<div align="center">
+
+<img src="docs/icon.png" width="96" alt="">
+
+# Allowlist suggestions
+
+**Proposes an allow rule once you've approved the same Bash command in a project three times.**
+
+[![Haunt plugin](https://img.shields.io/badge/Haunt-plugin-D97757)](https://github.com/highskore/haunt-hackathon)
+![Plugin API 0.5](https://img.shields.io/badge/plugin%20API-0.5-111)
+![WASM component](https://img.shields.io/badge/WASM-component-654ff0?logo=webassembly&logoColor=white)
+![MIT licence](https://img.shields.io/badge/licence-MIT-6b7280)
+
+</div>
 
 Allow-rule suggestions for Claude Code as a first-party Haunt plugin (`dev.haunt.allowlist`). Once you have approved the same Bash command in the same project 3 times by clicking Allow in Haunt, it proposes the exact rule `Bash(<command>)` for that project's `.claude/settings.local.json`.
 
